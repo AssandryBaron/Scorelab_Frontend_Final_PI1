@@ -31,15 +31,14 @@ import Button from "../components/atoms/Button/Button";
 
 // ── Menú del Organizador ─────────────────────────────────────────────────────
 const MENU_ITEMS = [
-  { id: "dashboard",     label: "Dashboard",               icon: LayoutDashboard },
-  { id: "torneos",       label: "Mis Torneos",             icon: Trophy },
-  { id: "equipos",       label: "Validar Equipos",         icon: Users2 },
-  { id: "jugadores",     label: "Base de Jugadores",       icon: UserSquare2 },
-  { id: "partidos",      label: "Gestión de Partidos",     icon: Sword },
-  { id: "posiciones",    label: "Tablas de Posiciones",    icon: Table2 },
-  { id: "estadisticas",  label: "Estadísticas Goleadores", icon: BarChart3 },
-  { id: "calendario",    label: "Calendario Global",       icon: CalendarDays },
-  { id: "configuracion", label: "Configuración",           icon: Settings },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "torneos", label: "Mis Torneos", icon: Trophy },
+  { id: "equipos", label: "Validar Equipos", icon: Users2 },
+  { id: "jugadores", label: "Base de Jugadores", icon: UserSquare2 },
+  { id: "partidos", label: "Gestión de Partidos", icon: Sword },
+  { id: "posiciones", label: "Tablas de Posiciones", icon: Table2 },
+  { id: "estadisticas", label: "Estadísticas Goleadores", icon: BarChart3 },
+  { id: "calendario", label: "Calendario Global", icon: CalendarDays },
 ];
 
 // ── Utilidad: sección de contenido ───────────────────────────────────────────
@@ -64,7 +63,11 @@ const DashboardOrganizadorPage = () => {
   const user = userString ? JSON.parse(userString) : null;
   const nombre = user?.nombre || "Organizador";
 
-  const { torneos, loading: cargandoTorneos, refresh: refreshTorneos } = useTorneos();
+  const {
+    torneos,
+    loading: cargandoTorneos,
+    refresh: refreshTorneos,
+  } = useTorneos();
 
   const [solicitudes, setSolicitudes] = useState([]);
   const [cargandoSolicitudes, setCargandoSolicitudes] = useState(true);

@@ -16,20 +16,18 @@ const SolicitudesTable = ({
 }) => {
   const handleDecision = async (equipoId, decision) => {
     try {
-      // 🌟 CORRECCIÓN: Sincronización con el Backend
-      // Tu controlador usa PATCH /api/equipos/{id}/aprobar
+      // 🎯 CONEXIÓN REAL CON EL BACKEND
       if (decision === "APROBADO") {
         await api.patch(`/equipos/${equipoId}/aprobar`);
       } else {
-        // Si aún no tienes el endpoint de rechazar, puedes usar uno genérico
-        // o simplemente imprimir en consola por ahora
-        await api.patch(`/equipos/${equipoId}/estado`, { estado: "RECHAZADO" });
+        // ❌ Sincronizado con el nuevo endpoint PATCH /api/equipos/{id}/rechazar
+        await api.patch(`/equipos/${equipoId}/rechazar`);
       }
 
       // Refrescamos la lista después de la acción exitosa
       onRefresh?.();
     } catch (err) {
-      console.error("Error al actualizar estado:", err);
+      console.error("Error al actualizar estado de la solicitud:", err);
       alert("No se pudo procesar la solicitud.");
     }
   };
@@ -71,7 +69,6 @@ const SolicitudesTable = ({
               <td className="px-4 py-3 text-slate-200 font-medium">
                 {equipo.nombre}
               </td>
-              {/* 🌟 CORRECCIÓN: Verifica que el campo sea 'torneoNombre' o 'nombreTorneo' según tu EquipoResponse en Java */}
               <td className="px-4 py-3 text-slate-400">
                 {equipo.torneoNombre || equipo.nombreTorneo || "—"}
               </td>
