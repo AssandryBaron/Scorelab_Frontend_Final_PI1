@@ -8,82 +8,20 @@ const GlobalCalendar = () => {
   const [cargando, setCargando] = useState(true);
   const [errorAcceso, setErrorAcceso] = useState(false);
 
-  // 🕵️‍♂️ Detectamos el rol real del usuario desde el localStorage
-  const userObj = JSON.parse(localStorage.getItem("user") || "{}");
-  const rolUsuario = userObj.rol || localStorage.getItem("rol") || "DELEGADO";
-  const esOrganizador = rolUsuario === "ORGANIZADOR";
-
   useEffect(() => {
     const fetchPartidos = async () => {
       try {
         setCargando(true);
         setErrorAcceso(false);
 
-        if (esOrganizador) {
-          // 🟢 SI ES ORGANIZADOR: Usamos la ruta original que funciona perfectamente
-          const res = await api.get("/partidos");
-          const data = res.data?.datos || res.data || [];
-          setPartidos(data);
-        } else {
-          // 🔵 SI ES DELEGADO: El backend bloquea /partidos con 403.
-          // Hacemos un bypass inteligente consumiendo datos que el delegado SÍ puede ver
-          // para construir o simular el fixture en modo lectura.
-          try {
-            const resTorneos = await api.get("/torneos");
-            const torneos = resTorneos.data?.datos || resTorneos.data || [];
+        // 🎯 CONEXIÓN REAL EN TIEMPO REAL: Consumimos la API unificada
+        // Funciona tanto para el Organizador como para Alma Rosa (Delegada)
+        const res = await api.get("/partidos");
+        const data = res.data?.datos || res.data?.data || res.data || [];
 
-            // Reutilizamos partidos mockeados con la estructura exacta para no romper el render
-            // Basados exactamente en el fixture real de tu torneo
-            const fixtureSimulado = [
-              {
-                id: 1,
-                equipoLocal: { nombre: "Bayer FC" },
-                equipoVisitante: { nombre: "Chelsea" },
-                golesLocal: 0,
-                golesVisitante: 0,
-                lugar: "Cancha 2",
-                fechaHora: "2026-05-22T14:57:00",
-                estado: "PROGRAMADO",
-              },
-              {
-                id: 2,
-                equipoLocal: { nombre: "Nacional" },
-                equipoVisitante: { nombre: "Zeus FC" },
-                golesLocal: 5,
-                golesVisitante: 2,
-                lugar: "Cancha 1",
-                fechaHora: "2026-05-21T14:56:00",
-                estado: "FINALIZADO",
-              },
-              {
-                id: 3,
-                equipoLocal: { nombre: "Zeus FC" },
-                equipoVisitante: { nombre: "Chelsea" },
-                golesLocal: 14,
-                golesVisitante: 8,
-                lugar: "Cancha 4",
-                fechaHora: "2026-05-25T14:57:00",
-                estado: "FINALIZADO",
-              },
-              {
-                id: 4,
-                equipoLocal: { nombre: "Nacional" },
-                equipoVisitante: { nombre: "Bayer FC" },
-                golesLocal: 8,
-                golesVisitante: 5,
-                lugar: "Cancha 3",
-                fechaHora: "2026-05-23T14:57:00",
-                estado: "FINALIZADO",
-              },
-            ];
-
-            setPartidos(fixtureSimulado);
-          } catch (err) {
-            console.error("Error en la ruta alternativa del delegado", err);
-          }
-        }
+        setPartidos(data);
       } catch (error) {
-        console.error("Error cargando calendario global:", error);
+        console.error("Error cargando calendario global en vivo:", error);
         if (error.response?.status === 403) {
           setErrorAcceso(true);
         }
@@ -93,7 +31,7 @@ const GlobalCalendar = () => {
     };
 
     fetchPartidos();
-  }, [esOrganizador]);
+  }, []);
 
   const formatearFecha = (fechaStr) => {
     if (!fechaStr) return "Por definir";

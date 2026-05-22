@@ -1,50 +1,81 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Trophy,
+  Users2,
+  UserSquare2,
+  Sword,
+  Table2,
+  BarChart3,
+  CalendarDays,
+  Settings,
+} from "lucide-react";
+
 import { useTorneos } from "../hooks/useTorneos";
 import api from "../api/api";
 
-// Componentes
-import SidebarOrganizador from "../components/organisms/SidebarOrganizador/SidebarOrganizador";
-import AppHeader from "../components/organisms/AppHeader/AppHeader";
+// Layout unificado
+import DashboardShell from "../components/templates/DashboardLayout/DashboardShell";
+
+// Componentes de contenido
 import TorneoGrid from "../components/organisms/TorneoGrid/TorneoGrid";
 import SolicitudesTable from "../components/organisms/SolicitudesTable/SolicitudesTable";
 import CrearTorneoModal from "../components/organisms/CrearTorneoModal/CrearTorneoModal";
 import TournamentMatches from "../components/organisms/TournamentMatches/TournamentMatches";
 import GlobalCalendar from "../components/organisms/Calendar/GlobalCalendar";
 import JugadoresPage from "./JugadoresPage";
-import PosicionesPage from "./PosicionesPage"; // ✅ IMPORTACIÓN DE POSICIONES EXISTENTE
-import EstadisticasOrganizadorPage from "./EstadisticasOrganizadorPage"; // 📊 NUEVA IMPORTACIÓN SOLICITADA
+import PosicionesPage from "./PosicionesPage";
+import EstadisticasOrganizadorPage from "./EstadisticasOrganizadorPage";
 import Button from "../components/atoms/Button/Button";
 
+// ── Menú del Organizador ─────────────────────────────────────────────────────
+const MENU_ITEMS = [
+  { id: "dashboard",     label: "Dashboard",               icon: LayoutDashboard },
+  { id: "torneos",       label: "Mis Torneos",             icon: Trophy },
+  { id: "equipos",       label: "Validar Equipos",         icon: Users2 },
+  { id: "jugadores",     label: "Base de Jugadores",       icon: UserSquare2 },
+  { id: "partidos",      label: "Gestión de Partidos",     icon: Sword },
+  { id: "posiciones",    label: "Tablas de Posiciones",    icon: Table2 },
+  { id: "estadisticas",  label: "Estadísticas Goleadores", icon: BarChart3 },
+  { id: "calendario",    label: "Calendario Global",       icon: CalendarDays },
+  { id: "configuracion", label: "Configuración",           icon: Settings },
+];
+
+// ── Utilidad: sección de contenido ───────────────────────────────────────────
+const Section = ({ title, children }) => (
+  <section className="space-y-5">
+    {title && (
+      <h2 className="text-xs font-bold text-slate-500 uppercase tracking-[0.18em]">
+        {title}
+      </h2>
+    )}
+    {children}
+  </section>
+);
+
+// ── Componente principal ─────────────────────────────────────────────────────
 const DashboardOrganizadorPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [modalAbierto, setModalAbierto] = useState(false);
 
-  // Datos del usuario
   const userString = localStorage.getItem("user");
   const user = userString ? JSON.parse(userString) : null;
   const nombre = user?.nombre || "Organizador";
 
-  // Hook de Torneos
-  const {
-    torneos,
-    loading: cargandoTorneos,
-    refresh: refreshTorneos,
-  } = useTorneos();
+  const { torneos, loading: cargandoTorneos, refresh: refreshTorneos } = useTorneos();
 
-  // Estado para solicitudes y modales
   const [solicitudes, setSolicitudes] = useState([]);
   const [cargandoSolicitudes, setCargandoSolicitudes] = useState(true);
-  const [modalAbierto, setModalAbierto] = useState(false);
 
   const cargarSolicitudes = useCallback(async () => {
     setCargandoSolicitudes(true);
     try {
       const res = await api.get("/equipos/solicitudes");
-      const listaExtraida = res.data?.datos || res.data?.data || [];
-      setSolicitudes(listaExtraida);
-    } catch (error) {
-      console.error("Error cargando solicitudes", error);
+      setSolicitudes(res.data?.datos || res.data?.data || []);
+    } catch (err) {
+      console.error("Error cargando solicitudes", err);
     } finally {
       setCargandoSolicitudes(false);
     }
@@ -64,63 +95,34 @@ const DashboardOrganizadorPage = () => {
     navigate("/");
   };
 
-  // 🌟 RENDERIZADO DINÁMICO ACTUALIZADO CON EL SISTEMA DE ESTADÍSTICAS
-  const renderMainContent = () => {
+  // ── Contenido según tab activa ─────────────────────────────────────────────
+  const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
         return (
-          <div className="animate-fade-in space-y-12">
-            <section>
-              <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6 flex items-center gap-2">
-                🏆 Torneos activos
-              </h2>
+          <div className="space-y-10 animate-fade-in">
+            <Section title="🏆 Torneos activos">
               <TorneoGrid torneos={torneos} loading={cargandoTorneos} />
-            </section>
-            <section>
-              <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6 flex items-center gap-2">
-                📋 Solicitudes pendientes
-              </h2>
+            </Section>
+            <Section title="📋 Solicitudes pendientes">
               <SolicitudesTable
                 solicitudes={solicitudes}
                 cargando={cargandoSolicitudes}
                 onRefresh={handleRefreshAll}
               />
-            </section>
-          </div>
-        );
-
-      case "partidos":
-        return (
-          <div className="animate-fade-in">
-            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6">
-              ⚽ Gestión de Partidos
-            </h2>
-            {torneos.length > 0 ? (
-              <TournamentMatches torneoId={torneos[0].id} />
-            ) : (
-              <p className="text-slate-500 italic">
-                Crea un torneo primero para gestionar partidos.
-              </p>
-            )}
-          </div>
-        );
-
-      case "calendario":
-        return (
-          <div className="animate-fade-in">
-            <GlobalCalendar />
+            </Section>
           </div>
         );
 
       case "torneos":
         return (
-          <div className="animate-fade-in">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-                Todos los Torneos
+          <div className="animate-fade-in space-y-5">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xs font-bold text-slate-500 uppercase tracking-[0.18em]">
+                Todos los torneos
               </h2>
               <button
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors"
                 onClick={() => setModalAbierto(true)}
               >
                 + Nuevo Torneo
@@ -132,9 +134,9 @@ const DashboardOrganizadorPage = () => {
 
       case "equipos":
         return (
-          <div className="animate-fade-in">
-            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6">
-              Validación de Equipos
+          <div className="animate-fade-in space-y-5">
+            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-[0.18em]">
+              Validación de equipos
             </h2>
             <SolicitudesTable
               solicitudes={solicitudes}
@@ -147,10 +149,25 @@ const DashboardOrganizadorPage = () => {
       case "jugadores":
         return <JugadoresPage />;
 
+      case "partidos":
+        return (
+          <div className="animate-fade-in space-y-5">
+            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-[0.18em]">
+              ⚽ Gestión de Partidos
+            </h2>
+            {torneos.length > 0 ? (
+              <TournamentMatches torneoId={torneos[0].id} />
+            ) : (
+              <p className="text-slate-500 italic text-sm">
+                Crea un torneo primero para gestionar partidos.
+              </p>
+            )}
+          </div>
+        );
+
       case "posiciones":
         return <PosicionesPage />;
 
-      // 📊 NUEVO CASO CONECTADO: Módulo de Estadísticas y Control Global solicitado
       case "estadisticas":
         return (
           <EstadisticasOrganizadorPage
@@ -159,41 +176,46 @@ const DashboardOrganizadorPage = () => {
           />
         );
 
+      case "calendario":
+        return (
+          <div className="animate-fade-in">
+            <GlobalCalendar />
+          </div>
+        );
+
       default:
         return (
-          <div className="text-slate-500 p-10 text-center italic">
+          <div className="text-slate-500 p-12 text-center italic text-sm bg-slate-900/30 rounded-2xl border border-slate-800/40">
             Sección "{activeTab}" en desarrollo...
           </div>
         );
     }
   };
 
+  // ── Header actions condicionales ───────────────────────────────────────────
+  const headerActions =
+    activeTab === "dashboard" || activeTab === "torneos" ? (
+      <Button variant="success" size="sm" onClick={() => setModalAbierto(true)}>
+        + Crear Torneo
+      </Button>
+    ) : null;
+
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-200">
-      <SidebarOrganizador
+    <>
+      <DashboardShell
+        role="ORGANIZADOR"
+        roleLabel="Panel Organizador"
+        accentColor="blue"
+        menuItems={MENU_ITEMS}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        onTabChange={setActiveTab}
         onLogout={handleLogout}
-      />
-
-      <main className="flex-1 ml-64 min-h-screen flex flex-col">
-        <AppHeader
-          title={`Hola, ${nombre} 👋`}
-          subtitle={`Panel Organizador > ${activeTab.toUpperCase()}`}
-          onLogout={handleLogout}
-          actions={
-            activeTab === "dashboard" && (
-              <Button variant="success" onClick={() => setModalAbierto(true)}>
-                + Crear Torneo
-              </Button>
-            )
-          }
-        />
-
-        <div className="p-8">
-          <div className="max-w-7xl mx-auto">{renderMainContent()}</div>
-        </div>
-      </main>
+        headerTitle={`Hola, ${nombre} 👋`}
+        headerSubtitle={`Panel Organizador › ${activeTab.toUpperCase()}`}
+        headerActions={headerActions}
+      >
+        {renderContent()}
+      </DashboardShell>
 
       {modalAbierto && (
         <CrearTorneoModal
@@ -204,7 +226,7 @@ const DashboardOrganizadorPage = () => {
           }}
         />
       )}
-    </div>
+    </>
   );
 };
 
